@@ -42,7 +42,7 @@ pub fn main() !void {
         sieve.?.runSieve();
         passes += 1;
     }
-    const tD: f64 = @floatFromInt(toSeconds(std.time.nanoTimestamp() - start));
+    const tD: f64 = @floatFromInt(std.time.nanoTimestamp() - start);
     if (sieve != null) {
         try sieve.?.printResult(false, tD, passes);
         sieve.?.deinit();

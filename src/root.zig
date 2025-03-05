@@ -1,41 +1,49 @@
 const builtin = @import("builtin");
 const std = @import("std");
+const PackedIntSlice = std.packed_int_array.PackedIntSlice;
 
 pub const Sieve = struct {
     const TSelf = @This();
     allocator: std.mem.Allocator,
-    isPrimeArr: []bool,
+
+    bitArrayBytes: []u8,
+    bitArray: PackedIntSlice(u1),
     sieveSize: usize,
 
     pub fn init(allocator: std.mem.Allocator, sieveSize: usize) !TSelf {
-        const r = Sieve{
+        var r = Sieve{
             .allocator = allocator,
             .sieveSize = sieveSize,
-            .isPrimeArr = try allocator.alloc(bool, sieveSize / 2),
+            .bitArrayBytes = undefined,
+            .bitArray = undefined,
         };
-        @memset(r.isPrimeArr, true);
+
+        const bitArrayByteCount = PackedIntSlice(u1).bytesRequired(sieveSize / 2);
+        r.bitArrayBytes = try allocator.alloc(u8, bitArrayByteCount);
+        r.bitArray = PackedIntSlice(u1).init(r.bitArrayBytes, sieveSize / 2);
+        @memset(r.bitArrayBytes, 0xFF);
         return r;
     }
 
     pub fn deinit(self: *TSelf) void {
-        self.allocator.free(self.isPrimeArr);
+        self.allocator.free(self.bitArrayBytes);
     }
 
     inline fn getBit(self: *const TSelf, index: usize) bool {
         const i: usize = index / 2;
-        std.debug.assert(i < self.isPrimeArr.len);
-        return self.isPrimeArr[i];
+        std.debug.assert(i < self.bitArray.len);
+        return self.bitArray.get(i) == 1;
     }
 
     inline fn clearBit(self: *TSelf, index: usize) void {
         const i: usize = index / 2;
-        std.debug.assert(i < self.isPrimeArr.len);
-        self.isPrimeArr[i] = false;
+        std.debug.assert(i < self.bitArray.len);
+        self.bitArray.set(i, 0);
         // std.log.debug("{d} is not prime", .{index});
     }
 
     pub fn runSieve(self: *TSelf) void {
-        const q = std.math.sqrt(self.isPrimeArr.len);
+        const q = std.math.sqrt(self.bitArray.len);
         var factor: usize = 3;
 
         while (factor < q) : (factor += 2) {
