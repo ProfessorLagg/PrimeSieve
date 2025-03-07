@@ -1,7 +1,8 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const root = @import("root.zig");
-const Sieve = root.Sieve;
+// const Sieve = root.SieveDaveClone;
+const Sieve = root.SieveLagg;
 
 pub const std_options: std.Options = .{
     // Set the log level to info to .debug. use the scope levels instead
@@ -47,5 +48,4 @@ pub fn main() !void {
         try sieve.?.printResult(false, tD, passes);
         sieve.?.deinit();
     }
-
 }
