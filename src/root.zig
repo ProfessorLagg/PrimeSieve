@@ -94,35 +94,38 @@ pub const SieveDaveClone = struct {
 
 pub const SieveLagg = struct {
     const TSelf = @This();
-    allocator: std.mem.Allocator,
+    const TArr = BitArray(u8);
 
-    bitArray: []u1,
+    allocator: std.mem.Allocator,
+    bitArray: TArr,
     N: usize,
 
     pub fn init(allocator: std.mem.Allocator, sieveSize: usize) !TSelf {
-        const r = TSelf{ // NO FOLD
+        const bitCount = @divFloor(sieveSize + 1, 2);
+        var r = TSelf{ // NO FOLD
             .allocator = allocator,
             .N = sieveSize,
-            .bitArray = try allocator.alloc(u1, @divFloor(sieveSize + 1, 2)),
+            .bitArray = try TArr.init(allocator, bitCount),
         };
-        @memset(r.bitArray, 1);
+        r.bitArray.setAll();
         return r;
     }
 
     pub fn deinit(self: *TSelf) void {
-        self.allocator.free(self.bitArray);
+        self.bitArray.deinit();
     }
 
     inline fn getBit(self: *const TSelf, index: usize) bool {
         const i = @divFloor(index, 2) - 1;
-        return @bitCast(self.bitArray[i]);
+        const bit = self.bitArray.getBit(i); // TODO Inline Call
+        return @bitCast(bit);
     }
 
     inline fn clearBit(self: *TSelf, index: usize) void {
         std.debug.assert(index >= 3);
         std.debug.assert((index % 2) != 0);
         const i = @divFloor(index, 2) - 1;
-        self.bitArray[i] = 0;
+        self.bitArray.clearBit(i); // TODO Inline Call
     }
 
     fn calculateQ(N: usize) usize {
@@ -220,7 +223,7 @@ test "BitArray" {
     bitArray.setAll();
     for (0..bitLen) |i| {
         try std.testing.expectEqual(1, bitArray.getBit(i));
-        
+
         bitArray.clearBit(i);
         try std.testing.expectEqual(0, bitArray.getBit(i));
 
