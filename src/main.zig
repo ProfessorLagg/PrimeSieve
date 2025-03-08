@@ -25,6 +25,8 @@ inline fn toSeconds(ns: i128) i128 {
     return @divFloor(ns, ns_per_s);
 }
 
+/// How long to test for, in nanoseconds
+const maxRuntimeNanoseconds: i128 = 30 * std.time.ns_per_s;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -32,22 +34,23 @@ pub fn main() !void {
 
     // const allocator = std.heap.c_allocator;
 
-    const start: i128 = std.time.nanoTimestamp();
-    var passes: usize = 0;
-    var runtimeSeconds: i128 = 0;
-    var sieve: ?Sieve = null;
-    while (runtimeSeconds < 5) : (runtimeSeconds = toSeconds(std.time.nanoTimestamp() - start)) {
-        if (sieve != null) {
-            sieve.?.deinit();
-        }
-        sieve = try Sieve.init(allocator, SequenceLength);
+    var passCount: usize = 0;
+    var sieve: Sieve = try Sieve.init(allocator, SequenceLength);
+    var total_ns: i128 = 0.0;
 
-        sieve.?.runSieve();
-        passes += 1;
+    const start: i128 = std.time.nanoTimestamp();
+    while ((std.time.nanoTimestamp() - start) < maxRuntimeNanoseconds) {
+        const loopStart = std.time.nanoTimestamp();
+        nosuspend {
+            sieve.deinit();
+            sieve = try Sieve.init(allocator, SequenceLength);
+            sieve.runSieve();
+        }
+        const loopEnd = std.time.nanoTimestamp();
+        total_ns += (loopEnd - loopStart);
+        passCount += 1;
     }
-    const tD: f64 = @floatFromInt(std.time.nanoTimestamp() - start);
-    if (sieve != null) {
-        try sieve.?.printResult(false, tD, passes);
-        sieve.?.deinit();
-    }
+
+    try sieve.printResult(false, @as(f64, @floatFromInt(total_ns)), passCount);
+    sieve.deinit();
 }

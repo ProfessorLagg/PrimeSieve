@@ -115,7 +115,7 @@ pub const SieveLagg = struct {
 
     inline fn getBit(self: *const TSelf, index: usize) bool {
         const i = @divFloor(index, 2) - 1;
-        return self.bitArray[i] == 1;
+        return @bitCast(self.bitArray[i]);
     }
 
     inline fn clearBit(self: *TSelf, index: usize) void {
@@ -140,7 +140,7 @@ pub const SieveLagg = struct {
             if (self.getBit(i)) {
                 var j: usize = i * i;
                 while (j < self.N) : (j += i) {
-                    if (!math.evenlyDivides(usize, j, 2)) {
+                    if (math.isUnevenUInt(j)) {
                         self.clearBit(j);
                     }
                 }
@@ -158,30 +158,17 @@ pub const SieveLagg = struct {
     }
 
     pub fn printResult(self: *const TSelf, showResults: bool, durationNanoseconds: f64, passCount: usize) !void {
+        if (showResults) {
+            std.log.err("showResults not yet implemented", .{});
+        }
+
         const stdout = std.io.getStdOut().writer();
-        if (showResults) {
-            try stdout.print("2, ", .{});
-        }
-
-        var count: usize = 0;
-        var i: usize = 3;
-        while (i <= self.N) : (i += 2) {
-            const isPrime = self.getBit(i);
-            count += @intFromBool(isPrime);
-            if (isPrime) {
-                if (showResults) {
-                    try stdout.print("{d}, ", .{i});
-                }
-            }
-        }
-
-        if (showResults) {
-            try stdout.print("\n", .{});
-        }
+        const count = self.countPrimes();
 
         const durationSeconds: f64 = durationNanoseconds / @as(f64, std.time.ns_per_s);
-        const avg: f64 = durationSeconds / @as(f64, @floatFromInt(passCount));
-        try stdout.print("Passes: {d}, Time: {d}s, Avg: {d}, Limit: {d}, Prime Count: {d}", .{ passCount, durationSeconds, avg, self.N, count });
+        const passesPerSecond: f64 = @as(f64, @floatFromInt(passCount)) / durationSeconds;
+        // try stdout.print("Passes: {d}, Time: {d}s, Avg: {d}, Limit: {d}, Prime Count: {d}", .{ passCount, durationSeconds, avg, self.N, count });
+        try stdout.print("Limit: {d:.0} | Prime Count: {d:.0} | Runtime: {d:.3}s | Passes: {d:.0} • {d:.3}/s", .{ self.N, count, durationSeconds, passCount, passesPerSecond });
     }
 };
 
