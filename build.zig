@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .single_threaded = single_threaded,
+        .link_libc = true,
     });
 
     // This declares intent for the library to be installed into the standard
@@ -37,6 +38,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .single_threaded = single_threaded,
+        .link_libc = true,
     });
 
     // This declares intent for the executable to be installed into the

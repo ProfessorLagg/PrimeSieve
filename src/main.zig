@@ -30,6 +30,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
+    // const allocator = std.heap.c_allocator;
+
     const start: i128 = std.time.nanoTimestamp();
     var passes: usize = 0;
     var runtimeSeconds: i128 = 0;
