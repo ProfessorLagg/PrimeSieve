@@ -214,7 +214,7 @@ test "SieveLagg" {
 
 test "BitArray" {
     const bitLen: usize = math.powUInt(usize, 2, 17);
-    var bitArray: BitArray(u8) = try BitArray(u8).init(std.testing.allocator, bitLen);
+    var bitArray: BitArray(usize) = try BitArray(usize).init(std.testing.allocator, bitLen);
     defer bitArray.deinit();
 
     bitArray.setAll();
