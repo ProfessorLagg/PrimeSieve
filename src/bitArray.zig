@@ -1,23 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-/// Returns true if y evenly divides x. Probably faster than x % y == 0
-inline fn evenlyDivides(comptime T: type, x: T, y: T) bool {
-    const Ti = comptime @typeInfo(T);
-    comptime std.debug.assert(Ti == .Int);
-    std.debug.assert(y != 0);
-
-    return (@divFloor(x, y) * y) == x;
-}
-
-inline fn divCeil(comptime T: type, x: T, y: T) T {
-    const Ti = comptime @typeInfo(T);
-    comptime std.debug.assert(Ti == .Int);
-    comptime std.debug.assert(Ti.Int.signedness == .unsigned);
-    std.debug.assert(y != 0);
-
-    return @divFloor(x, y) + @as(T, @intFromBool(!evenlyDivides(T, x, y)));
-}
+const math = @import("math.zig");
 
 pub fn BitArray(comptime T: type) type {
     comptime {
@@ -46,7 +30,7 @@ pub fn BitArray(comptime T: type) type {
 
         // === con- and destructor(s) ===
         pub fn init(allocator: std.mem.Allocator, bitCount: usize) !TSelf {
-            const bufSize: usize = divCeil(usize, bitCount, @bitSizeOf(T));
+            const bufSize: usize = math.divCeil(usize, bitCount, @bitSizeOf(T));
             return TSelf{ // NO FOLD
                 .allocator = allocator,
                 .bitCount = bitCount,

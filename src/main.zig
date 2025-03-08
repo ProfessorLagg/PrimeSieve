@@ -15,7 +15,7 @@ pub const std_options: std.Options = .{
     // .log_scope_levels = &[_]std.log.ScopeLevel{},
 };
 
-var SequenceLength: usize = switch (builtin.mode) {
+const SequenceLength: usize = switch (builtin.mode) {
     .Debug => 1_000,
     else => 1_000_000,
 };

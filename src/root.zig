@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const PackedIntSlice = std.packed_int_array.PackedIntSlice;
 const BitArray = @import("bitArray.zig").BitArray(u8);
+const math = @import("math.zig");
 
 pub const SieveDaveClone = struct {
     const TSelf = @This();
@@ -99,8 +100,12 @@ pub const SieveLagg = struct {
     N: usize,
 
     pub fn init(allocator: std.mem.Allocator, sieveSize: usize) !TSelf {
-        const r = TSelf{ .allocator = allocator, .N = sieveSize, .bitArray = try allocator.alloc(u1, sieveSize) };
-        @memset(r.bitArray[2..], 1);
+        const r = TSelf{ // NO FOLD
+            .allocator = allocator,
+            .N = sieveSize,
+            .bitArray = try allocator.alloc(u1, @divFloor(sieveSize + 1, 2)),
+        };
+        @memset(r.bitArray, 1);
         return r;
     }
 
@@ -108,15 +113,19 @@ pub const SieveLagg = struct {
         self.allocator.free(self.bitArray);
     }
 
-    inline fn getBit(self: *const TSelf, i: usize) bool {
+    inline fn getBit(self: *const TSelf, index: usize) bool {
+        const i = @divFloor(index, 2) - 1;
         return self.bitArray[i] == 1;
     }
 
-    inline fn clearBit(self: *TSelf, i: usize) void {
+    inline fn clearBit(self: *TSelf, index: usize) void {
+        std.debug.assert(index >= 3);
+        std.debug.assert((index % 2) != 0);
+        const i = @divFloor(index, 2) - 1;
         self.bitArray[i] = 0;
     }
 
-    inline fn calculateQ(N: usize) usize {
+    fn calculateQ(N: usize) usize {
         const n: f128 = @floatFromInt(N);
         const sqrt_n: f128 = @sqrt(n);
         const ciel_sqrt_n: f128 = @ceil(sqrt_n);
@@ -126,21 +135,24 @@ pub const SieveLagg = struct {
     pub fn runSieve(self: *TSelf) void {
         const q: usize = calculateQ(self.N);
 
-        var i: usize = 2;
-        while (i <= q) : (i += 1) {
+        var i: usize = 3;
+        while (i <= q) : (i += 2) {
             if (self.getBit(i)) {
                 var j: usize = i * i;
                 while (j < self.N) : (j += i) {
-                    self.clearBit(j);
+                    if (!math.evenlyDivides(usize, j, 2)) {
+                        self.clearBit(j);
+                    }
                 }
             }
         }
     }
 
     pub fn countPrimes(self: *const TSelf) usize {
-        var count: usize = 0;
-        for (0..self.N) |i| {
-            count += @as(usize, @intCast(@intFromBool(self.getBit(i))));
+        var count: usize = 1;
+        var i: usize = 3;
+        while (i <= self.N) : (i += 2) {
+            count += @intFromBool(self.getBit(i));
         }
         return count;
     }
@@ -152,12 +164,13 @@ pub const SieveLagg = struct {
         }
 
         var count: usize = 0;
-        for (0..self.N) |num| {
-            const isPrime = self.getBit(num);
+        var i: usize = 3;
+        while (i <= self.N) : (i += 2) {
+            const isPrime = self.getBit(i);
             count += @intFromBool(isPrime);
             if (isPrime) {
                 if (showResults) {
-                    try stdout.print("{d}, ", .{num});
+                    try stdout.print("{d}, ", .{i});
                 }
             }
         }
