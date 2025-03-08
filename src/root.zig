@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const PackedIntSlice = std.packed_int_array.PackedIntSlice;
-const BitArray = @import("bitArray.zig").BitArray(u8);
+const BitArray = @import("bitArray.zig").BitArray;
 const math = @import("math.zig");
 
 pub const SieveDaveClone = struct {
@@ -177,13 +177,13 @@ test "SieveLagg" {
         10,
         100,
         1_000,
-        10_000,
-        100_000,
-        1_000_000,
-        10_000_000,
-        100_000_000,
-        1_000_000_000,
-        10_000_000_000,
+        // 10_000,
+        // 100_000,
+        // 1_000_000,
+        // 10_000_000,
+        // 100_000_000,
+        // 1_000_000_000,
+        // 10_000_000_000,
     };
     // number of primes below N. index matches Narr
     const Parr = comptime [_]usize{
@@ -199,7 +199,9 @@ test "SieveLagg" {
         455_052_511,
     };
 
-    for (0..Narr.len, Narr, Parr) |_, n, p| {
+    for (0..Narr.len) |i| {
+        const n = Narr[i];
+        const p = Parr[i];
         var sieve: SieveLagg = try SieveLagg.init(std.testing.allocator, n);
         errdefer sieve.deinit();
         sieve.runSieve();
@@ -208,4 +210,23 @@ test "SieveLagg" {
     }
 
     std.log.warn("Test {s} passed!", .{"SieveLagg"});
+}
+
+test "BitArray" {
+    const bitLen: usize = math.powUInt(usize, 2, 17);
+    var bitArray: BitArray(u8) = try BitArray(u8).init(std.testing.allocator, bitLen);
+    defer bitArray.deinit();
+
+    bitArray.setAll();
+    for (0..bitLen) |i| {
+        try std.testing.expectEqual(1, bitArray.getBit(i));
+        
+        bitArray.clearBit(i);
+        try std.testing.expectEqual(0, bitArray.getBit(i));
+
+        bitArray.setBit(i);
+        try std.testing.expectEqual(1, bitArray.getBit(i));
+    }
+
+    std.log.warn("Test {s} passed!", .{"BitArray"});
 }

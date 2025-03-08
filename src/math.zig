@@ -21,6 +21,21 @@ pub inline fn isEvenUInt(n: anytype) bool {
     return (n & 1) == 0;
 }
 
+/// Raises x to the power of y. Throws a compile error if T is not an unsigned integer
+pub inline fn powUInt(comptime T: type, x: T, y: T) T {
+    comptime {
+        const Ti = @typeInfo(T);
+        if (Ti != .Int) @compileError("Expected integer, but found: " + @typeName(T));
+        if (Ti.Int.signedness != .unsigned) @compileError("Expected unsigned integer, but found: " + @typeName(T));
+    }
+
+    var r: T = 1;
+    for (0..y) |_| {
+        r *= x;
+    }
+    return r;
+}
+
 /// Returns true if n is not even. Throws a compile error if n is not an unsigned integer
 pub inline fn isUnevenUInt(n: anytype) bool {
     const T = comptime @TypeOf(n);
