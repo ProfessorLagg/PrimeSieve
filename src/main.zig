@@ -26,7 +26,7 @@ inline fn toSeconds(ns: i128) i128 {
 }
 
 /// How long to test for, in nanoseconds
-const maxRuntimeNanoseconds: i128 = 30 * std.time.ns_per_s;
+const maxRuntimeNanoseconds: i128 = 10 * std.time.ns_per_s;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();

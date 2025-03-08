@@ -139,10 +139,10 @@ pub const SieveLagg = struct {
         while (i <= q) : (i += 2) {
             if (self.getBit(i)) {
                 var j: usize = i * i;
-                while (j < self.N) : (j += i) {
-                    if (math.isUnevenUInt(j)) {
-                        self.clearBit(j);
-                    }
+                while (j < self.N) {
+                    std.debug.assert(math.isUnevenUInt(j));
+                    self.clearBit(j);
+                    j += 2 * i;
                 }
             }
         }
@@ -167,8 +167,8 @@ pub const SieveLagg = struct {
 
         const durationSeconds: f64 = durationNanoseconds / @as(f64, std.time.ns_per_s);
         const passesPerSecond: f64 = @as(f64, @floatFromInt(passCount)) / durationSeconds;
-        // try stdout.print("Passes: {d}, Time: {d}s, Avg: {d}, Limit: {d}, Prime Count: {d}", .{ passCount, durationSeconds, avg, self.N, count });
-        try stdout.print("Limit: {d:.0} | Prime Count: {d:.0} | Runtime: {d:.3}s | Passes: {d:.0} • {d:.3}/s", .{ self.N, count, durationSeconds, passCount, passesPerSecond });
+        const passesPerFiveSeconds: f64 = passesPerSecond * 5.0;
+        try stdout.print("Limit: {d:.0} | Prime Count: {d:.0} | Runtime: {d:.3}s | Passes: {d:.0} • {d:.3} p/s • {d:.0} p/5s", .{ self.N, count, durationSeconds, passCount, passesPerSecond, passesPerFiveSeconds });
     }
 };
 
@@ -177,26 +177,26 @@ test "SieveLagg" {
         10,
         100,
         1_000,
-        // 10_000,
-        // 100_000,
-        // 1_000_000,
-        // 10_000_000,
-        // 100_000_000,
-        // 1_000_000_000,
-        // 10_000_000_000,
+        10_000,
+        100_000,
+        1_000_000,
+        10_000_000,
+        100_000_000,
+        1_000_000_000,
+        10_000_000_000,
     };
     // number of primes below N. index matches Narr
     const Parr = comptime [_]usize{
         4,
         25,
         168,
-        // 1_229,
-        // 9_592,
-        // 78_498,
-        // 664_579,
-        // 5_761_455,
-        // 50_847_534,
-        // 455_052_511,
+        1_229,
+        9_592,
+        78_498,
+        664_579,
+        5_761_455,
+        50_847_534,
+        455_052_511,
     };
 
     for (0..Narr.len, Narr, Parr) |_, n, p| {
@@ -206,4 +206,6 @@ test "SieveLagg" {
         try std.testing.expectEqual(p, sieve.countPrimes());
         sieve.deinit();
     }
+
+    std.log.warn("Test {s} passed!", .{"SieveLagg"});
 }
